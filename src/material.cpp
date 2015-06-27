@@ -36,8 +36,8 @@ namespace {
 
   // Polynomial material balance parameters
 
-  //                                  pair  pawn knight bishop rook queen
-  const int LinearCoefficients[6] = { 1852, -162, -1122, -183,  249, -52 };
+  //                                pawn knight bishop rook queen
+  const int ImbalanceWeights[5] = { -162, -1122, -183,  249, -52 };
 
   const int QuadraticCoefficientsSameColor[][PIECE_TYPE_NB] = {
     // pair pawn knight bishop rook queen
@@ -97,28 +97,24 @@ namespace {
   /// piece type for both colors.
 
   template<Color Us>
-  int imbalance(const int pieceCount[][PIECE_TYPE_NB]) {
+  int imbalance(const Position& pos) {
+
+    /// for each one of our pieces query enemy pieces
+    /// if distance between them is greater than 3
+    /// pieceweight( dist_enemy_king - dist_enemy_king )
 
     const Color Them = (Us == WHITE ? BLACK : WHITE);
 
-    int pt1, pt2, pc, v;
     int value = 0;
 
-    // Second-degree polynomial material imbalance by Tord Romstad
-    for (pt1 = NO_PIECE_TYPE; pt1 <= QUEEN; ++pt1)
-    {
-        pc = pieceCount[Us][pt1];
-        if (!pc)
-            continue;
+    Bitboard ourPieces = pos.pieces(Us);
+    Bitboard theirPieces = pos.pieces(Them);
+    Square ourKing = pos.king_square(Us);
+    Square theirKing = pos.king_square(Them);
 
-        v = LinearCoefficients[pt1];
+    /// for loop
 
-        for (pt2 = NO_PIECE_TYPE; pt2 <= pt1; ++pt2)
-            v +=  QuadraticCoefficientsSameColor[pt1][pt2] * pieceCount[Us][pt2]
-                + QuadraticCoefficientsOppositeColor[pt1][pt2] * pieceCount[Them][pt2];
-
-        value += pc * v;
-    }
+    
     return value;
   }
 
